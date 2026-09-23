@@ -24,6 +24,7 @@ LockedState::LockedState(status state) : BuildingState(state) {}
 bool LockedState::access(Person* person) {
     if(person->getRole() == Role::SECURITY) {
         cout << person->getName() << "whith role: " << person->getRole() << ", accessed building " << building->getName() << endl;
+        building->unsetAlarms();
         return true;
     }
 
@@ -40,10 +41,12 @@ UnlockedState::UnlockedState(status state) : BuildingState(state) {}
 
 bool UnlockedState::access(Person* person) {
     cout << person->getName() << "whith role: " << person->getRole() << ", accessed building " << building->getName() << endl;
+    building->unsetAlarms();
     return true;
 }
 
 void UnlockedState::lockdown() {
+    building->setAlarms();
     building->setState(new LockedState(status::LOCKED));
 }
 
@@ -53,6 +56,7 @@ CleaningOnlyState::CleaningOnlyState(status state) : BuildingState(state) {}
 bool CleaningOnlyState::access(Person* person) {
     if(person->getRole() == Role::SECURITY || person->getRole() == Role::CLEANINGSTAFF) {
         cout << person->getName() << "whith role: " << person->getRole() << ", accessed building " << building->getName() << endl;
+        building->unsetAlarms();
         return true;
     }
 
@@ -61,6 +65,7 @@ bool CleaningOnlyState::access(Person* person) {
 }
 
 void CleaningOnlyState::lockdown() {
+    building->setAlarms();
     building->setState(new LockedState(status::LOCKED));
 }
 
@@ -70,6 +75,7 @@ LecturerOnlyState::LecturerOnlyState(status state) : BuildingState(state) {}
 bool LecturerOnlyState::access(Person* person) {
     if(person->getRole() == Role::SECURITY || person->getRole() == Role::CLEANINGSTAFF || person->getRole() == Role::LECTURER) {
         cout << person->getName() << "whith role: " << person->getRole() << ", accessed building " << building->getName() << endl;
+        building->unsetAlarms();
         return true;
     }
 
@@ -78,6 +84,7 @@ bool LecturerOnlyState::access(Person* person) {
 }
 
 void LecturerOnlyState::lockdown() {
+    building->setAlarms();
     building->setState(new LockedState(status::LOCKED));
 }
 
@@ -87,6 +94,7 @@ NoStudentsState::NoStudentsState(status state) : BuildingState(state) {}
 bool NoStudentsState::access(Person* person) {
     if(person->getRole() == Role::SECURITY || person->getRole() == Role::CLEANINGSTAFF || person->getRole() == Role::LECTURER || person->getRole() == Role::TUTOR) {
         cout << person->getName() << "whith role: " << person->getRole() << ", accessed building " << building->getName() << endl;
+        building->unsetAlarms();
         return true;
     }
 
@@ -95,5 +103,6 @@ bool NoStudentsState::access(Person* person) {
 }
 
 void NoStudentsState::lockdown() {
+    building->setAlarms();
     building->setState(new LockedState(status::LOCKED));
 }
