@@ -10,7 +10,8 @@ private:
 public:
     FacilitiesTeam(IncidentMediator* im);
     ~FacilitiesTeam() override;
-    
+    void lockArea(const std::string& location);
+    void openEvacuationRoute(const std::string& location);
     std::string get() override;
     void set(std::string change) override;
 };

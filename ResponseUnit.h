@@ -1,8 +1,8 @@
 #ifndef RESPPONSEUNIT_H
 #define RESPPONSEUNIT_H
 
-class IncidentMediator;
 #include <iostream>
+#include "IncidentMediator.h"
 
 class ResponseUnit {
 private:

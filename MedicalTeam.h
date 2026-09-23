@@ -10,7 +10,8 @@ private:
 public:
     MedicalTeam(IncidentMediator* im);
     ~MedicalTeam() override;
-   
+    void confrimCasualty(const std::string& location);
+    void standBy();
     std::string get() override;
     void set(std::string change) override;
 };
