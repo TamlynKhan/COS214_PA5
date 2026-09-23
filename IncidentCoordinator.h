@@ -14,6 +14,7 @@ public:
     ~IncidentCoordinator() override;
     void addUnit(ResponseUnit* unit);
     virtual void notify(ResponseUnit* origin) override;
+    void resolveIncident(const std::string& location);
 };
 
 #endif

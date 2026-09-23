@@ -6,14 +6,16 @@
 
 class MedicalTeam : public ResponseUnit {
 private:
-    std::string lastEvent;
+    EventType lastEvent;
+    std::string lastLocation;
 public:
     MedicalTeam(IncidentMediator* im);
     ~MedicalTeam() override;
     void confrimCasualty(const std::string& location);
     void standBy();
-    std::string get() override;
-    void set(std::string change) override;
+    EventType get() const override;
+    std::string getLocation() const override;
+    void set(EventType type, const std::string& location) override;
 };
 
 #endif

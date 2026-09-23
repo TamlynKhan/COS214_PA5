@@ -1,21 +1,35 @@
 #include "CommsTeam.h"
 
-CommsTeam::CommsTeam(IncidentMediator* im) :ResponseUnit(im) {}
+CommsTeam::CommsTeam(IncidentMediator* im) : ResponseUnit(im) , lastEvent(EventType::NONE) , lastLocation("") {}
 
 CommsTeam::~CommsTeam() {}
    
 void CommsTeam::issueEvacuation(const std::string& location) {
     std::cout << "The Comms Team has issued an evacuation instruction for " << location << std::endl;
-    lastEvent = "EVACUATE:" + location;
+    lastEvent = EventType::BREACH; 
+    lastLocation = location;
 }
     
-void CommsTeam::sendClear(const std::string& location) {
+void CommsTeam::sendAllClear(const std::string& location) {
     std::cout << "The Comms Team sent an all-clear for" << location << std::endl;
-    lastEvent = "ALL_CLEAR:" + location;
+    lastEvent = EventType::RESOLVED; 
+    lastLocation = location;
 }
 
-std::string CommsTeam::get() {
+EventType CommsTeam::get() const{
     return lastEvent;
 }
+
+std::string CommsTeam::getLocation() const{
+    return lastLocation;
+}
     
-void CommsTeam::set(std::string change) {}
+void CommsTeam::set(EventType type, const std::string& location) {
+    if (type == EventType::BREACH || type == EventType::CASUALTY) {
+        issueEvacuation(location);
+    }
+    
+    else if (type == EventType::RESOLVED) {
+        sendAllClear(location);
+    }
+}

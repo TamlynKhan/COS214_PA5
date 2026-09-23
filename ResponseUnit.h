@@ -1,8 +1,9 @@
-#ifndef RESPPONSEUNIT_H
-#define RESPPONSEUNIT_H
+#ifndef RESPONSEUNIT_H
+#define RESPONSEUNIT_H
 
 #include <iostream>
 #include "IncidentMediator.h"
+#include "EventType.h"
 
 class ResponseUnit {
 private:
@@ -10,9 +11,10 @@ private:
 public:
     ResponseUnit(IncidentMediator* im) : incidentMediator(im) {}
     virtual ~ResponseUnit() {}
-    void change() { incidentMediator->notify(this); };
-    virtual std::string get() = 0;
-    virtual void set(std::string change) = 0;
+    void changed() { incidentMediator->notify(this); };
+    virtual EventType get() const = 0;
+    virtual std::string getLocation() const = 0;
+    virtual void set(EventType type, const std::string& location) = 0;
 };
 
 #endif

@@ -6,14 +6,16 @@
 
 class FacilitiesTeam : public ResponseUnit {
 private:
-    std::string lastEvent;
+    EventType lastEvent;
+    std::string lastLocation;
 public:
     FacilitiesTeam(IncidentMediator* im);
     ~FacilitiesTeam() override;
     void lockArea(const std::string& location);
     void openEvacuationRoute(const std::string& location);
-    std::string get() override;
-    void set(std::string change) override;
+    EventType get() const override;
+    std::string getLocation() const override;
+    void set(EventType type, const std::string& location) override;
 };
 
 #endif

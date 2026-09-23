@@ -10,11 +10,18 @@ void IncidentCoordinator::addUnit(ResponseUnit* unit) {
 }
      
 void IncidentCoordinator::notify(ResponseUnit* origin) {
+    EventType type = origin->get();
+    std::string location = origin->getLocation();
 
-    std::string change = origin->get();
     for (ResponseUnit* unit : units) {
         if (unit != origin) {
-            unit->set(change);
+            unit->set(type, location);
         }
+    }
+}
+
+void IncidentCoordinator::resolveIncident(const std::string& location) {
+    for (ResponseUnit* unit : units) {
+        unit->set(EventType::RESOLVED, location);
     }
 }
