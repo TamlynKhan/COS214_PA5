@@ -1,0 +1,5 @@
+.git
+*.o
+*.d
+campusguard
+*.pdf

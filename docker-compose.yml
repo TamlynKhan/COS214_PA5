@@ -1,0 +1,10 @@
+services:
+  campusguard:
+    build: .
+    image: campusguard
+    tty: true
+    # gdb needs ptrace inside the container
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
