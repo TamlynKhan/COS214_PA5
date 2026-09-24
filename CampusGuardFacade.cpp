@@ -10,6 +10,18 @@
 CampusGuardFacade::CampusGuardFacade(OperatorConsole* con, DispatchCentre* cen, IncidentMediator* coord) 
     : console(con) , centre(cen), coordinator (coord) {}
     
+Incident* CampusGuardFacade::reportIncident(const std::string& id, const std::string& description, Building* building, UnitType requiredUnit) {
+    
+    if (building == nullptr) {
+        std::cout << "CampusGuardFacade cannot report an incident without a building" << std::endl;
+        return nullptr;
+    }
+
+    Incident* incident = new Incident(id, description, building, requiredUnit);
+    std::cout << "CampusGuardFacade registered incident " << incident->getId() << "(" << unitTypeName(requiredUnit) << ") at " << incident->getLocationName() << std::endl;
+    return incident;
+}
+
 bool CampusGuardFacade::respondToBreach(Incident* incident, Building* building, Alarm* alarm, DispatchStrategy* strategy) {
 
     if (console == nullptr || centre == nullptr) {
@@ -28,10 +40,10 @@ bool CampusGuardFacade::respondToBreach(Incident* incident, Building* building, 
     }
 
     console->queueCommand(new DispatchUnitsCommand(centre, incident));
-    console->queueCommand(new SecureBuildingCommand(building));
     if (alarm != nullptr) {
         console->queueCommand(new SoundAlarmCommand(alarm));
     }
+    console->queueCommand(new SecureBuildingCommand(building));
 
     console->executePending();
     return true;
