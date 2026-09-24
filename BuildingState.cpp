@@ -1,108 +1,125 @@
-//state
-
 #include "BuildingState.h"
+#include "Building.h"
+#include "Person.h"
 
-#include <string>
 #include <iostream>
 
-using namespace std;
-
-//BuildingState
-BuildingState::BuildingState(status state) : state(state) {}
-
-status BuildingState::getState() {
-    return state;
+BuildingState::~BuildingState()
+{
 }
 
-void BuildingState::setBuildingState(BuildingState* state) {
-    building->setState(state);
-}
-
-//LockedState
-LockedState::LockedState(status state) : BuildingState(state) {}
-
-bool LockedState::access(Person* person) {
-    if(person->getRole() == Role::SECURITY) {
-        cout << person->getName() << "whith role: " << person->getRole() << ", accessed building " << building->getName() << endl;
-        building->unsetAlarms();
-        return true;
-    }
-
-    cout << person->getRole() << ": " << person->getName() << ", attempted to access locked building " << building->getName() << endl;
+bool BuildingState::armsAlarms() const
+{
     return false;
 }
 
-void LockedState::lockdown() {
-    return;
-}
-
-//UnlockedState
-UnlockedState::UnlockedState(status state) : BuildingState(state) {}
-
-bool UnlockedState::access(Person* person) {
-    cout << person->getName() << "whith role: " << person->getRole() << ", accessed building " << building->getName() << endl;
-    building->unsetAlarms();
+bool BuildingState::acceptsRestriction() const
+{
     return true;
 }
 
-void UnlockedState::lockdown() {
-    building->setAlarms();
-    building->setState(new LockedState(status::LOCKED));
+void BuildingState::admit(Building&, const Person&) const
+{
 }
 
-//CleaningOnlyState
-CleaningOnlyState::CleaningOnlyState(status state) : BuildingState(state) {}
+BuildingState* BuildingState::lockdown()
+{
+    return new LockedState(this);
+}
 
-bool CleaningOnlyState::access(Person* person) {
-    if(person->getRole() == Role::SECURITY || person->getRole() == Role::CLEANINGSTAFF) {
-        cout << person->getName() << "whith role: " << person->getRole() << ", accessed building " << building->getName() << endl;
-        building->unsetAlarms();
-        return true;
-    }
+BuildingState* BuildingState::reopen()
+{
+    return nullptr;
+}
 
-    cout << person->getRole() << ": " << person->getName() << ", attempted to access locked building " << building->getName() << endl;
+std::string UnlockedState::getName() const
+{
+    return "Unlocked";
+}
+
+bool UnlockedState::allows(const Person&) const
+{
+    return true;
+}
+
+LockedState::LockedState(BuildingState* resumeTo)
+    : resumeTo(resumeTo)
+{
+}
+
+LockedState::~LockedState()
+{
+    delete resumeTo;
+}
+
+std::string LockedState::getName() const
+{
+    return "Locked";
+}
+
+bool LockedState::allows(const Person& person) const
+{
+    return person.getRole() == Role::SECURITY;
+}
+
+bool LockedState::armsAlarms() const
+{
+    return true;
+}
+
+bool LockedState::acceptsRestriction() const
+{
     return false;
 }
 
-void CleaningOnlyState::lockdown() {
-    building->setAlarms();
-    building->setState(new LockedState(status::LOCKED));
+void LockedState::admit(Building& building, const Person& person) const
+{
+    std::cout << "[Building " << building.getName() << "] " << person.getName() << " disarms the alarms on entry" << std::endl;
+    building.deactivateAlarms();
 }
 
-//LecturerOnlyState
-LecturerOnlyState::LecturerOnlyState(status state) : BuildingState(state) {}
+BuildingState* LockedState::lockdown()
+{
+    return nullptr;
+}
 
-bool LecturerOnlyState::access(Person* person) {
-    if(person->getRole() == Role::SECURITY || person->getRole() == Role::CLEANINGSTAFF || person->getRole() == Role::LECTURER) {
-        cout << person->getName() << "whith role: " << person->getRole() << ", accessed building " << building->getName() << endl;
-        building->unsetAlarms();
-        return true;
+BuildingState* LockedState::reopen()
+{
+    BuildingState* next = resumeTo;
+    resumeTo = nullptr;
+    if (next == nullptr)
+    {
+        next = new UnlockedState();
     }
-
-    cout << person->getRole() << ": " << person->getName() << ", attempted to access locked building " << building->getName() << endl;
-    return false;
+    return next;
 }
 
-void LecturerOnlyState::lockdown() {
-    building->setAlarms();
-    building->setState(new LockedState(status::LOCKED));
+std::string CleaningOnlyState::getName() const
+{
+    return "Cleaning Only";
 }
 
-//NoStudentsState
-NoStudentsState::NoStudentsState(status state) : BuildingState(state) {}
-
-bool NoStudentsState::access(Person* person) {
-    if(person->getRole() == Role::SECURITY || person->getRole() == Role::CLEANINGSTAFF || person->getRole() == Role::LECTURER || person->getRole() == Role::TUTOR) {
-        cout << person->getName() << "whith role: " << person->getRole() << ", accessed building " << building->getName() << endl;
-        building->unsetAlarms();
-        return true;
-    }
-
-    cout << person->getRole() << ": " << person->getName() << ", attempted to access locked building " << building->getName() << endl;
-    return false;
+bool CleaningOnlyState::allows(const Person& person) const
+{
+    return person.getRole() == Role::SECURITY || person.getRole() == Role::CLEANING_STAFF;
 }
 
-void NoStudentsState::lockdown() {
-    building->setAlarms();
-    building->setState(new LockedState(status::LOCKED));
+std::string LecturerOnlyState::getName() const
+{
+    return "Lecturer Only";
+}
+
+bool LecturerOnlyState::allows(const Person& person) const
+{
+    return person.getRole() == Role::SECURITY || person.getRole() == Role::CLEANING_STAFF || person.getRole() == Role::LECTURER;
+}
+
+std::string NoStudentsState::getName() const
+{
+    return "No Students";
+}
+
+bool NoStudentsState::allows(const Person& person) const
+{
+    return person.getRole() != Role::STUDENT;
 }

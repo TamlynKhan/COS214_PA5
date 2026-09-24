@@ -1,70 +1,44 @@
-//state
-
 #ifndef BUILDING_H
 #define BUILDING_H
 
-#include <iostream>
 #include <string>
 #include <vector>
 
-#include "BuildingState.h"
-#include "AlarmConnector.h"
+class Alarm;
+class BuildingState;
+class Person;
 
-using namespace std;
-
-class Building {
-    protected:
-        string name;
-        BuildingState* status;
-        vector<AlarmConnector*> alarms;
-    
+class Building
+{
     public:
-        Building(string name) : name(name) {}
+        explicit Building(const std::string& name, BuildingState* initialState = nullptr);
+        ~Building();
 
-        void setState(BuildingState* status) {
-            delete status;
-            this->status = status;
-        }
+        Building(const Building&) = delete;
+        Building& operator=(const Building&) = delete;
 
-        string getState() {
-            return status->getState() + "";
-        }
+        std::string getName() const;
+        std::string getStateName() const;
 
-        string getName() {
-            return name;
-        }
+        void addAlarm(Alarm* alarm);
+        Alarm* findAlarm(const std::string& alarmName) const;
+        int activateAlarms();
+        int deactivateAlarms();
 
-        void addAlarm(AlarmConnector* alarm) {
-            alarms.push_back(alarm);
-        }
+        bool access(const Person& person);
+        bool lockdown();
+        bool reopen();
+        // Takes ownership of policy and returns the replaced state, which the caller now owns.
+        // Returns nullptr when refused (e.g. during lockdown); the caller then keeps policy.
+        BuildingState* restrictAccess(BuildingState* policy);
 
-        Alarm* searchAlarms(string name) {
-            for(Alarm* alarm : alarms) {
-                if(alarm->getName() == name) {
-                    return alarm;
-                }
-            }
-        }
+    private:
+        void changeState(BuildingState* next);
+        void syncAlarms();
 
-        void setAlarms() {
-            for(Alarm* alarm : alarms) {
-                alarm->activate(alarm->getType());
-            }
-        }
-
-        void unsetAlarms() {
-            for(Alarm* alarm : alarms) {
-                alarm->deactivate(alarm->getType());
-            }
-        }
-        
-        ~Building() {
-            for(Alarm* alarm : alarms) {
-                delete alarm;
-            }
-
-            delete status;
-        }
+        std::string name;
+        BuildingState* state;
+        std::vector<Alarm*> alarms;
 };
 
 #endif

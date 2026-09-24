@@ -1,42 +1,33 @@
-//state
-
 #ifndef PERSON_H
 #define PERSON_H
 
-#include <iostream>
 #include <string>
 
-using namespace std;
-
-enum Role {
+enum class Role
+{
     STUDENT,
     TUTOR,
     LECTURER,
-    CLEANINGSTAFF,
+    CLEANING_STAFF,
     SECURITY
 };
 
-class Person {
-    private:
-        string name;
-        Role role;
+std::string roleName(Role role);
 
+class Person
+{
     public:
-        Person(string name, Role role) : name(name), role(role) {}
+        Person(const std::string& name, Role role);
 
-        Role getRole() {
-            return role;
-        }
-        string getName() {
-            return name;
-        }
+        std::string getName() const;
+        Role getRole() const;
 
-        void setRole(Role role) {
-            this->role = role;
-        }
-        void setName(string name) {
-            this->name = name;
-        }
+        void setName(const std::string& name);
+        void setRole(Role role);
+
+    private:
+        std::string name;
+        Role role;
 };
 
 #endif

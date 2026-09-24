@@ -1,25 +1,19 @@
-//Adapter
-
 #ifndef BLUESECURITYALARM_H
 #define BLUESECURITYALARM_H
 
-#include <iostream>
-#include <string>
-
-using namespace std;
-
-class BlueSecurityAlarm {
-    private:
-        int code;
-        int status;
-
+class BlueSecurityAlarm
+{
     public:
-        BlueSecurityAlarm(int);
+        explicit BlueSecurityAlarm(int status);
 
-        void setAlarm(int, int);
+        void setAlarm(int code, int status);
 
         int getAlarmCode();
         int getAlarmStatus();
+
+    private:
+        int code;
+        int status;
 };
 
 #endif

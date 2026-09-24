@@ -1,0 +1,168 @@
+valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --error-exitcode=1 ./campusguard
+==6786== Memcheck, a memory error detector
+==6786== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==6786== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info
+==6786== Command: ./campusguard
+==6786== 
+CampusGuard: emergency response coordination
+[DispatchCentre] roster:
+    SEC-ALPHA (Security, 3 min) available
+    SEC-BRAVO (Security, 7 min) available
+    MED-1 (Medical, 5 min) available
+    MED-2 (Medical, 8 min) available
+    FAC-1 (Facilities, 4 min) available
+    COMMS (Communications, 1 min) available
+
+========== Scenario 1: break-in at Engineering 1 ==========
+[Console Control Room] queued: Dispatch units to INC-101
+[Console Control Room] queued: Sound Motion alarm ENG-MOTION
+[Console Control Room] executing: Dispatch units to INC-101
+[DispatchCentre] INC-101 requires Security units, applying Fastest Unit strategy
+[Incident INC-101] status Reported -> Dispatched
+[SEC-ALPHA] Security unit deployed to INC-101 at Engineering 1 (ETA 3 min)
+[IncidentCoordinator] UNIT DEPLOYED from SEC-ALPHA at INC-101 (Engineering 1)
+[COMMS] notifying occupants of Engineering 1: SEC-ALPHA is en route, keep access routes clear
+[Console Control Room] executing: Sound Motion alarm ENG-MOTION
+[AlarmConnector ENG-MOTION] translating Motion activation to legacy code 1
+[BlueSecurityAlarm] legacy panel set to code 1, status 1
+
+========== Security on scene reports a breach ==========
+[SEC-ALPHA] reports a security breach at Engineering 1
+[IncidentCoordinator] BREACH from SEC-ALPHA at INC-101 (Engineering 1)
+[MED-1] moving to standby near Engineering 1 for possible casualties
+[FAC-1] locking down Engineering 1
+[Building Engineering 1] Unlocked -> Locked
+[AlarmConnector ENG-WINDOW] translating Window activation to legacy code 2
+[BlueSecurityAlarm] legacy panel set to code 2, status 1
+[COMMS] alerting campus: shelter in place and avoid Engineering 1
+[SEC-ALPHA] requests backup at Engineering 1
+[IncidentCoordinator] BACKUP REQUESTED from SEC-ALPHA at INC-101 (Engineering 1)
+[IncidentCoordinator] sending SEC-BRAVO as backup for SEC-ALPHA
+[SEC-BRAVO] Security unit deployed to INC-101 at Engineering 1 (ETA 7 min)
+[IncidentCoordinator] UNIT DEPLOYED from SEC-BRAVO at INC-101 (Engineering 1)
+[COMMS] notifying occupants of Engineering 1: SEC-BRAVO is en route, keep access routes clear
+
+========== People arrive at the locked building ==========
+[Building Engineering 1] Student Thabo DENIED access (Locked)
+[Building Engineering 1] Security Naledi GRANTED access (Locked)
+[Building Engineering 1] Naledi disarms the alarms on entry
+[AlarmConnector ENG-MOTION] translating Motion deactivation to legacy code 1
+[BlueSecurityAlarm] legacy panel set to code 1, status 0
+[AlarmConnector ENG-WINDOW] translating Window deactivation to legacy code 2
+[BlueSecurityAlarm] legacy panel set to code 2, status 0
+
+========== Operator re-arms the building, then tries to cancel the lockdown ==========
+[Console Control Room] queued: Secure building Engineering 1
+[Console Control Room] executing: Secure building Engineering 1
+[SecureBuildingCommand] requesting lockdown of Engineering 1
+[AlarmConnector ENG-MOTION] translating Motion activation to legacy code 1
+[BlueSecurityAlarm] legacy panel set to code 1, status 1
+[AlarmConnector ENG-WINDOW] translating Window activation to legacy code 2
+[BlueSecurityAlarm] legacy panel set to code 2, status 1
+[Building Engineering 1] already under lockdown; re-armed 2 alarm(s)
+[Console Control Room] cancelling: Secure building Engineering 1
+[SecureBuildingCommand] lockdown of Engineering 1 cannot be cancelled from the console; it must be lifted by campus security on site
+[Console Control Room] could not cancel: Secure building Engineering 1 (remains in effect, removed from cancel history)
+
+========== Incident resolved ==========
+[Console Control Room] queued: Resolve INC-101
+[Console Control Room] queued: Dispatch units to INC-101
+[Console Control Room] executing: Resolve INC-101
+[IncidentCoordinator] resolving INC-101 at Engineering 1
+[SEC-ALPHA] standing down from INC-101
+[SEC-BRAVO] standing down from INC-101
+[Incident INC-101] status Dispatched -> Resolved
+[FAC-1] restoring normal access to Engineering 1
+[Building Engineering 1] Locked -> Unlocked
+[AlarmConnector ENG-MOTION] translating Motion deactivation to legacy code 1
+[BlueSecurityAlarm] legacy panel set to code 1, status 0
+[AlarmConnector ENG-WINDOW] translating Window deactivation to legacy code 2
+[BlueSecurityAlarm] legacy panel set to code 2, status 0
+[COMMS] sending an all-clear for Engineering 1
+[Console Control Room] executing: Dispatch units to INC-101
+[DispatchCentre] dispatch refused: INC-101 is already resolved
+[Console Control Room] FAILED: Dispatch units to INC-101 (discarded)
+[DispatchCentre] roster:
+    SEC-ALPHA (Security, 3 min) available
+    SEC-BRAVO (Security, 7 min) available
+    MED-1 (Medical, 5 min) available
+    MED-2 (Medical, 8 min) available
+    FAC-1 (Facilities, 4 min) available
+    COMMS (Communications, 1 min) available
+
+========== Scenario 2: casualty during an exam in Exam Hall ==========
+[Console Control Room] queued: Restrict Exam Hall to No Students
+[Console Control Room] executing: Restrict Exam Hall to No Students
+[Building Exam Hall] Unlocked -> No Students
+[Console Control Room] queued: Restrict Exam Hall to Lecturer Only
+[Console Control Room] executing: Restrict Exam Hall to Lecturer Only
+[Building Exam Hall] No Students -> Lecturer Only
+[Console Control Room] cancelling: Restrict Exam Hall to Lecturer Only
+[RestrictAccessCommand] restoring No Students access to Exam Hall
+[Building Exam Hall] Lecturer Only -> No Students
+[Console Control Room] cancelled: Restrict Exam Hall to Lecturer Only
+
+========== Mass response for a medical emergency ==========
+[DispatchCentre] dispatch strategy set to Mass Response
+[Console Control Room] queued: Dispatch units to INC-202
+[Console Control Room] executing: Dispatch units to INC-202
+[DispatchCentre] INC-202 requires Medical units, applying Mass Response strategy
+[Incident INC-202] status Reported -> Dispatched
+[MED-1] Medical unit deployed to INC-202 at Exam Hall (ETA 5 min)
+[IncidentCoordinator] UNIT DEPLOYED from MED-1 at INC-202 (Exam Hall)
+[COMMS] notifying occupants of Exam Hall: MED-1 is en route, keep access routes clear
+[MED-2] Medical unit deployed to INC-202 at Exam Hall (ETA 8 min)
+[IncidentCoordinator] UNIT DEPLOYED from MED-2 at INC-202 (Exam Hall)
+[COMMS] notifying occupants of Exam Hall: MED-2 is en route, keep access routes clear
+
+========== Paramedics confirm the casualty ==========
+[MED-1] confirms a casualty at Exam Hall
+[IncidentCoordinator] CASUALTY from MED-1 at INC-202 (Exam Hall)
+[SEC-ALPHA] Security unit deployed to INC-202 at Exam Hall (ETA 3 min)
+[IncidentCoordinator] UNIT DEPLOYED from SEC-ALPHA at INC-202 (Exam Hall)
+[COMMS] notifying occupants of Exam Hall: SEC-ALPHA is en route, keep access routes clear
+[SEC-ALPHA] cordoning Exam Hall and escorting paramedics
+[FAC-1] clearing an access route and holding lifts at Exam Hall
+[COMMS] notifying the campus clinic of a casualty at Exam Hall
+
+========== Access checks while paramedics work ==========
+[Building Exam Hall] Lecturer Dr Mokoena GRANTED access (No Students)
+[Building Exam Hall] Tutor Ayesha GRANTED access (No Students)
+[Building Exam Hall] Student Pieter DENIED access (No Students)
+
+========== Invalid operations are refused ==========
+[Building Exam Hall] has no alarm named NO-SUCH-ALARM
+[Console Control Room] queued: Sound alarm (no alarm)
+[Console Control Room] executing: Sound alarm (no alarm)
+[SoundAlarmCommand] no alarm system connected
+[Console Control Room] FAILED: Sound alarm (no alarm) (discarded)
+
+========== Patient stabilised; incident resolved ==========
+[Console Control Room] queued: Resolve INC-202
+[Console Control Room] executing: Resolve INC-202
+[IncidentCoordinator] resolving INC-202 at Exam Hall
+[SEC-ALPHA] standing down from INC-202
+[MED-1] standing down from INC-202
+[MED-2] standing down from INC-202
+[Incident INC-202] status Dispatched -> Resolved
+[FAC-1] restoring normal access to Exam Hall
+[Building Exam Hall] no lockdown to lift (No Students)
+[COMMS] sending an all-clear for Exam Hall
+[DispatchCentre] roster:
+    SEC-ALPHA (Security, 3 min) available
+    SEC-BRAVO (Security, 7 min) available
+    MED-1 (Medical, 5 min) available
+    MED-2 (Medical, 8 min) available
+    FAC-1 (Facilities, 4 min) available
+    COMMS (Communications, 1 min) available
+
+CampusGuard shutting down
+==6786== 
+==6786== HEAP SUMMARY:
+==6786==     in use at exit: 0 bytes in 0 blocks
+==6786==   total heap usage: 157 allocs, 157 frees, 81,704 bytes allocated
+==6786== 
+==6786== All heap blocks were freed -- no leaks are possible
+==6786== 
+==6786== For lists of detected and suppressed errors, rerun with: -s
+==6786== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

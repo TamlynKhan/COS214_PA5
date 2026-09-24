@@ -1,87 +1,75 @@
-//state
-
 #ifndef BUILDINGSTATE_H
 #define BUILDINGSTATE_H
 
-#include "Person.h"
-#include "Building.h"
-
-#include <iostream>
 #include <string>
 
-using namespace std;
+class Building;
+class Person;
 
-enum status {
-    LOCKED,
-    UNLOCKED,
-    CLEANINGONLY,
-    LECTURERONLY,
-    NOSTUDENTS
+// Transition ownership: lockdown() hands the current state to the new LockedState,
+// which resumes to it on reopen(). Any other state returned by a transition is new,
+// and the Building deletes the state it replaces.
+class BuildingState
+{
+    public:
+        virtual ~BuildingState();
+
+        virtual std::string getName() const = 0;
+        virtual bool allows(const Person& person) const = 0;
+        virtual bool armsAlarms() const;
+        virtual bool acceptsRestriction() const;
+        virtual void admit(Building& building, const Person& person) const;
+        virtual BuildingState* lockdown();
+        virtual BuildingState* reopen();
 };
 
-//BuildingState
-class BuildingState {
-    protected:
-        status state;
-        Building* building;
-    
+class UnlockedState : public BuildingState
+{
     public:
-        BuildingState(status);
-        void setBuildingState(BuildingState* newState);
-    
-        status getState();
-        virtual bool access(Person*) = 0;
-        virtual void lockdown() = 0;
+        std::string getName() const override;
+        bool allows(const Person& person) const override;
 };
 
-//LockedState
-class LockedState : public BuildingState {
+class LockedState : public BuildingState
+{
     public:
-        LockedState(status state);
-    
-        status getState();
-        virtual bool access(Person*);
-        virtual void lockdown();
+        explicit LockedState(BuildingState* resumeTo = nullptr);
+        ~LockedState() override;
+
+        LockedState(const LockedState&) = delete;
+        LockedState& operator=(const LockedState&) = delete;
+
+        std::string getName() const override;
+        bool allows(const Person& person) const override;
+        bool armsAlarms() const override;
+        bool acceptsRestriction() const override;
+        void admit(Building& building, const Person& person) const override;
+        BuildingState* lockdown() override;
+        BuildingState* reopen() override;
+
+    private:
+        BuildingState* resumeTo;
 };
 
-//UnlockedState
-class UnlockedState : public BuildingState {
+class CleaningOnlyState : public BuildingState
+{
     public:
-        UnlockedState(status state);
-    
-        status getState();
-        virtual bool access(Person*);
-        virtual void lockdown();
+        std::string getName() const override;
+        bool allows(const Person& person) const override;
 };
 
-//CleaningOnlyState
-class CleaningOnlyState : public BuildingState {
+class LecturerOnlyState : public BuildingState
+{
     public:
-        CleaningOnlyState(status state);
-    
-        status getState();
-        virtual bool access(Person*);
-        virtual void lockdown();
+        std::string getName() const override;
+        bool allows(const Person& person) const override;
 };
 
-//LecturerOnlyState
-class LecturerOnlyState : public BuildingState {
+class NoStudentsState : public BuildingState
+{
     public:
-        LecturerOnlyState(status state);
-    
-        status getState();
-        virtual bool access(Person*);
-        virtual void lockdown();
-};
-
-//NoStudentsState
-class NoStudentsState : public BuildingState {
-    public:
-        NoStudentsState(status state);
-    
-        status getState();
-        virtual bool access(Person*);
-        virtual void lockdown();
+        std::string getName() const override;
+        bool allows(const Person& person) const override;
 };
 
 #endif

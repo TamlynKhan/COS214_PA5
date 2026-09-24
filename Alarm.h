@@ -1,35 +1,54 @@
-//Adapter
-
 #ifndef ALARM_H
 #define ALARM_H
 
-#include <iostream>
 #include <string>
 
-#include "BlueSecurityAlarm.h"
-#include "Alarm.h"
+class BlueSecurityAlarm;
 
-using namespace std;
-
-enum AlarmType {
+enum class AlarmType
+{
     FIRE,
     WINDOW,
-    MOTION,
+    MOTION
 };
 
-class Alarm {
-    protected:
-        string name;
-        AlarmType type;
-    
+std::string alarmTypeName(AlarmType type);
+
+class Alarm
+{
     public:
-        Alarm(string, AlarmType);
-
-        virtual void activate(AlarmType) = 0;
-        virtual void deactivate(AlarmType) = 0;
-        virtual bool getState() = 0;
-
+        Alarm(const std::string& name, AlarmType type);
         virtual ~Alarm();
+
+        std::string getName() const;
+        AlarmType getType() const;
+
+        virtual bool activate() = 0;
+        virtual bool deactivate() = 0;
+        virtual bool isActive() const = 0;
+
+    private:
+        std::string name;
+        AlarmType type;
+};
+
+class AlarmConnector : public Alarm
+{
+    public:
+        AlarmConnector(const std::string& name, AlarmType type);
+        ~AlarmConnector() override;
+
+        AlarmConnector(const AlarmConnector&) = delete;
+        AlarmConnector& operator=(const AlarmConnector&) = delete;
+
+        bool activate() override;
+        bool deactivate() override;
+        bool isActive() const override;
+
+    private:
+        int translateCode(AlarmType type) const;
+
+        BlueSecurityAlarm* legacyAlarm;
 };
 
 #endif
