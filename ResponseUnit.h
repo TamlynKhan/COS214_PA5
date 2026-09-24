@@ -24,18 +24,22 @@ class ResponseUnit
         int getResponseMinutes() const;
         Incident* getAssignment() const;
         bool isAvailable() const;
+        bool isBusyElsewhere(const Incident* incident) const;
         bool canRespondTo(const Incident& incident) const;
 
-        void deploy(Incident* incident);
+        bool deploy(Incident* incident);
+        void recall();
         void standDown();
 
         virtual void onResponderDeployed(ResponseUnit* responder, Incident* incident);
+        virtual void onResponderRecalled(ResponseUnit* responder, Incident* incident);
         virtual void onBreach(Incident* incident);
         virtual void onCasualty(Incident* incident);
         virtual void onIncidentResolved(Incident* incident);
 
     protected:
         void changed(EventType event, Incident* incident);
+        IncidentMediator* getMediator() const;
 
     private:
         std::string callSign;
@@ -82,6 +86,7 @@ class CommsTeam : public ResponseUnit
         CommsTeam(const std::string& callSign, int responseMinutes);
 
         void onResponderDeployed(ResponseUnit* responder, Incident* incident) override;
+        void onResponderRecalled(ResponseUnit* responder, Incident* incident) override;
         void onBreach(Incident* incident) override;
         void onCasualty(Incident* incident) override;
         void onIncidentResolved(Incident* incident) override;

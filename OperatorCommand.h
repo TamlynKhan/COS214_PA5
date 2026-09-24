@@ -8,6 +8,7 @@
 
 class Alarm;
 class Building;
+class BuildingState;
 class DispatchCentre;
 class IncidentMediator;
 class ResponseUnit;
@@ -49,6 +50,26 @@ class SecureBuildingCommand : public OperatorCommand
 
     private:
         Building* building;
+};
+
+class RestrictAccessCommand : public OperatorCommand
+{
+    public:
+        RestrictAccessCommand(Building* building, BuildingState* policy);
+        ~RestrictAccessCommand() override;
+
+        RestrictAccessCommand(const RestrictAccessCommand&) = delete;
+        RestrictAccessCommand& operator=(const RestrictAccessCommand&) = delete;
+
+        bool execute() override;
+        bool undo() override;
+        std::string describe() const override;
+
+    private:
+        Building* building;
+        // owned: the requested policy until execute(), then the policy it replaced (for undo)
+        BuildingState* held;
+        std::string policyName;
 };
 
 class SoundAlarmCommand : public OperatorCommand

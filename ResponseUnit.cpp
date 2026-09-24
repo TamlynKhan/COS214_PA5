@@ -43,22 +43,49 @@ bool ResponseUnit::isAvailable() const
     return assignment == nullptr;
 }
 
+bool ResponseUnit::isBusyElsewhere(const Incident* incident) const
+{
+    return assignment != nullptr && assignment != incident;
+}
+
 bool ResponseUnit::canRespondTo(const Incident& incident) const
 {
     return isAvailable() && specialty == incident.getRequiredUnit();
 }
 
-void ResponseUnit::deploy(Incident* incident)
+bool ResponseUnit::deploy(Incident* incident)
 {
     if (incident == nullptr)
     {
         std::cout << "[" << callSign << "] cannot deploy to an unknown incident" << std::endl;
-        return;
+        return false;
+    }
+    if (assignment == incident)
+    {
+        std::cout << "[" << callSign << "] is already deployed to " << incident->getId() << std::endl;
+        return false;
+    }
+    if (assignment != nullptr)
+    {
+        std::cout << "[" << callSign << "] cannot deploy to " << incident->getId() << ": still assigned to " << assignment->getId() << std::endl;
+        return false;
     }
     assignment = incident;
     std::cout << "[" << callSign << "] " << unitTypeName(specialty) << " unit deployed to " << incident->getId()
               << " at " << incident->getLocationName() << " (ETA " << responseMinutes << " min)" << std::endl;
     changed(EventType::UNIT_DEPLOYED, incident);
+    return true;
+}
+
+void ResponseUnit::recall()
+{
+    Incident* incident = assignment;
+    if (incident == nullptr)
+    {
+        return;
+    }
+    standDown();
+    changed(EventType::UNIT_RECALLED, incident);
 }
 
 void ResponseUnit::standDown()
@@ -72,6 +99,10 @@ void ResponseUnit::standDown()
 }
 
 void ResponseUnit::onResponderDeployed(ResponseUnit*, Incident*)
+{
+}
+
+void ResponseUnit::onResponderRecalled(ResponseUnit*, Incident*)
 {
 }
 
@@ -95,6 +126,11 @@ void ResponseUnit::changed(EventType event, Incident* incident)
         return;
     }
     incidentMediator->notify(this, event, incident);
+}
+
+IncidentMediator* ResponseUnit::getMediator() const
+{
+    return incidentMediator;
 }
 
 SecurityTeam::SecurityTeam(const std::string& callSign, int responseMinutes)
@@ -128,6 +164,12 @@ bool SecurityTeam::requestBackup()
 
 void SecurityTeam::onCasualty(Incident* incident)
 {
+    if (isBusyElsewhere(incident))
+    {
+        std::cout << "[" << getCallSign() << "] tied up at " << getAssignment()->getId()
+                  << "; cannot escort paramedics at " << incident->getLocationName() << std::endl;
+        return;
+    }
     if (isAvailable())
     {
         deploy(incident);
@@ -154,6 +196,12 @@ bool MedicalTeam::confirmCasualty()
 
 void MedicalTeam::onBreach(Incident* incident)
 {
+    if (isBusyElsewhere(incident))
+    {
+        std::cout << "[" << getCallSign() << "] tied up at " << getAssignment()->getId()
+                  << "; cannot stand by near " << incident->getLocationName() << std::endl;
+        return;
+    }
     std::cout << "[" << getCallSign() << "] moving to standby near " << incident->getLocationName() << " for possible casualties" << std::endl;
 }
 
@@ -168,19 +216,28 @@ void FacilitiesTeam::onBreach(Incident* incident)
     {
         return;
     }
-    std::cout << "[" << getCallSign() << "] locking down " << incident->getLocationName() << std::endl;
+    std::cout << "[" << getCallSign() << "] locking down " << incident->getLocationName()
+              << (isBusyElsewhere(incident) ? " remotely via access control" : "") << std::endl;
     incident->getLocation()->lockdown();
 }
 
 void FacilitiesTeam::onCasualty(Incident* incident)
 {
-    std::cout << "[" << getCallSign() << "] clearing an access route and holding lifts at " << incident->getLocationName() << std::endl;
+    std::cout << "[" << getCallSign() << "] clearing an access route and holding lifts at " << incident->getLocationName()
+              << (isBusyElsewhere(incident) ? " remotely via building controls" : "") << std::endl;
 }
 
 void FacilitiesTeam::onIncidentResolved(Incident* incident)
 {
     if (incident->getLocation() == nullptr)
     {
+        return;
+    }
+    Incident* stillOpen = getMediator() == nullptr ? nullptr : getMediator()->openIncidentAt(incident->getLocation(), incident);
+    if (stillOpen != nullptr)
+    {
+        std::cout << "[" << getCallSign() << "] keeping " << incident->getLocationName() << " as is: "
+                  << stillOpen->getId() << " is still open there" << std::endl;
         return;
     }
     std::cout << "[" << getCallSign() << "] restoring normal access to " << incident->getLocationName() << std::endl;
@@ -196,6 +253,12 @@ void CommsTeam::onResponderDeployed(ResponseUnit* responder, Incident* incident)
 {
     std::cout << "[" << getCallSign() << "] notifying occupants of " << incident->getLocationName() << ": "
               << responder->getCallSign() << " is en route, keep access routes clear" << std::endl;
+}
+
+void CommsTeam::onResponderRecalled(ResponseUnit* responder, Incident* incident)
+{
+    std::cout << "[" << getCallSign() << "] updating occupants of " << incident->getLocationName() << ": "
+              << responder->getCallSign() << " has been recalled" << std::endl;
 }
 
 void CommsTeam::onBreach(Incident* incident)

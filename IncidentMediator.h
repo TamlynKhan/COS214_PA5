@@ -4,12 +4,14 @@
 #include <string>
 #include <vector>
 
+class Building;
 class Incident;
 class ResponseUnit;
 
 enum class EventType
 {
     UNIT_DEPLOYED,
+    UNIT_RECALLED,
     BREACH,
     CASUALTY,
     BACKUP_REQUESTED
@@ -24,6 +26,7 @@ class IncidentMediator
 
         virtual void notify(ResponseUnit* origin, EventType event, Incident* incident) = 0;
         virtual bool resolveIncident(Incident* incident) = 0;
+        virtual Incident* openIncidentAt(const Building* building, const Incident* except) const = 0;
 };
 
 class IncidentCoordinator : public IncidentMediator
@@ -38,6 +41,7 @@ class IncidentCoordinator : public IncidentMediator
         void addUnit(ResponseUnit* unit);
         void notify(ResponseUnit* origin, EventType event, Incident* incident) override;
         bool resolveIncident(Incident* incident) override;
+        Incident* openIncidentAt(const Building* building, const Incident* except) const override;
 
     private:
         std::vector<ResponseUnit*> selectResponders(ResponseUnit* origin, Incident* incident) const;

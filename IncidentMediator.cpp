@@ -2,12 +2,11 @@
 #include "Incident.h"
 #include "ResponseUnit.h"
 
-#include <algorithm>
 #include <iostream>
 
 std::string eventTypeName(EventType type)
 {
-    static const char* const names[] = { "UNIT DEPLOYED", "BREACH", "CASUALTY", "BACKUP REQUESTED" };
+    static const char* const names[] = { "UNIT DEPLOYED", "UNIT RECALLED", "BREACH", "CASUALTY", "BACKUP REQUESTED" };
     return names[static_cast<int>(type)];
 }
 
@@ -45,6 +44,12 @@ void IncidentCoordinator::notify(ResponseUnit* origin, EventType event, Incident
     std::cout << "[IncidentCoordinator] " << eventTypeName(event) << " from " << origin->getCallSign()
               << " at " << incident->getId() << " (" << incident->getLocationName() << ")" << std::endl;
 
+    if (event == EventType::BACKUP_REQUESTED)
+    {
+        sendBackup(origin, incident);
+        return;
+    }
+
     std::vector<ResponseUnit*> responders = selectResponders(origin, incident);
     switch (event)
     {
@@ -52,6 +57,12 @@ void IncidentCoordinator::notify(ResponseUnit* origin, EventType event, Incident
             for (ResponseUnit* unit : responders)
             {
                 unit->onResponderDeployed(origin, incident);
+            }
+            break;
+        case EventType::UNIT_RECALLED:
+            for (ResponseUnit* unit : responders)
+            {
+                unit->onResponderRecalled(origin, incident);
             }
             break;
         case EventType::BREACH:
@@ -67,7 +78,6 @@ void IncidentCoordinator::notify(ResponseUnit* origin, EventType event, Incident
             }
             break;
         case EventType::BACKUP_REQUESTED:
-            sendBackup(origin, incident);
             break;
     }
 }
@@ -103,23 +113,56 @@ bool IncidentCoordinator::resolveIncident(Incident* incident)
     return true;
 }
 
+Incident* IncidentCoordinator::openIncidentAt(const Building* building, const Incident* except) const
+{
+    if (building == nullptr)
+    {
+        return nullptr;
+    }
+    for (ResponseUnit* unit : units)
+    {
+        Incident* assignment = unit->getAssignment();
+        if (assignment != nullptr && assignment != except && !assignment->isResolved() && assignment->getLocation() == building)
+        {
+            return assignment;
+        }
+    }
+    return nullptr;
+}
+
+// One responder per specialty (other than the origin's), preferring a unit already on this
+// incident, then an available unit, then a unit busy elsewhere that can still act remotely.
 std::vector<ResponseUnit*> IncidentCoordinator::selectResponders(ResponseUnit* origin, Incident* incident) const
 {
     std::vector<ResponseUnit*> selected;
-    std::vector<UnitType> covered;
-    if (origin != nullptr)
-    {
-        covered.push_back(origin->getSpecialty());
-    }
+    std::vector<int> ranks;
 
     for (ResponseUnit* unit : units)
     {
-        bool reachable = unit->isAvailable() || unit->getAssignment() == incident;
-        bool alreadyCovered = std::find(covered.begin(), covered.end(), unit->getSpecialty()) != covered.end();
-        if (unit != origin && reachable && !alreadyCovered)
+        if (unit == origin || (origin != nullptr && unit->getSpecialty() == origin->getSpecialty()))
         {
-            covered.push_back(unit->getSpecialty());
+            continue;
+        }
+
+        int rank = unit->getAssignment() == incident ? 0 : (unit->isAvailable() ? 1 : 2);
+        bool placed = false;
+        for (std::size_t i = 0; i < selected.size(); ++i)
+        {
+            if (selected[i]->getSpecialty() == unit->getSpecialty())
+            {
+                if (rank < ranks[i])
+                {
+                    selected[i] = unit;
+                    ranks[i] = rank;
+                }
+                placed = true;
+                break;
+            }
+        }
+        if (!placed)
+        {
             selected.push_back(unit);
+            ranks.push_back(rank);
         }
     }
     return selected;

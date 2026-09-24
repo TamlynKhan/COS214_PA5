@@ -22,15 +22,19 @@ class Building
 
         void addAlarm(Alarm* alarm);
         Alarm* findAlarm(const std::string& alarmName) const;
-        void activateAlarms();
-        void deactivateAlarms();
+        int activateAlarms();
+        int deactivateAlarms();
 
         bool access(const Person& person);
         bool lockdown();
         bool reopen();
+        // Takes ownership of policy and returns the replaced state, which the caller now owns.
+        // Returns nullptr when refused (e.g. during lockdown); the caller then keeps policy.
+        BuildingState* restrictAccess(BuildingState* policy);
 
     private:
         void changeState(BuildingState* next);
+        void syncAlarms();
 
         std::string name;
         BuildingState* state;

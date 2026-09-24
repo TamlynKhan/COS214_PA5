@@ -1,6 +1,7 @@
 #include "OperatorCommand.h"
 #include "Alarm.h"
 #include "Building.h"
+#include "BuildingState.h"
 #include "DispatchCentre.h"
 #include "IncidentMediator.h"
 
@@ -42,7 +43,17 @@ bool DispatchUnitsCommand::undo()
     int recalled = centre->recall(incident, dispatched);
     dispatched.clear();
     std::cout << "[DispatchUnitsCommand] recalled " << recalled << " unit(s) from " << incident->getId() << std::endl;
-    incident->setStatus(previousStatus);
+
+    int remaining = centre->unitsAssignedTo(incident);
+    if (remaining > 0)
+    {
+        std::cout << "[DispatchUnitsCommand] " << remaining << " unit(s) sent in by the coordinator remain on "
+                  << incident->getId() << "; it stays " << incident->getStatusName() << std::endl;
+    }
+    else
+    {
+        incident->setStatus(previousStatus);
+    }
     return true;
 }
 
@@ -73,6 +84,10 @@ bool SecureBuildingCommand::execute()
 
 bool SecureBuildingCommand::undo()
 {
+    if (building == nullptr)
+    {
+        return false;
+    }
     std::cout << "[SecureBuildingCommand] lockdown of " << building->getName()
               << " cannot be cancelled from the console; it must be lifted by campus security on site" << std::endl;
     return false;
@@ -85,6 +100,57 @@ std::string SecureBuildingCommand::describe() const
         return "Secure building (no building)";
     }
     return "Secure building " + building->getName();
+}
+
+RestrictAccessCommand::RestrictAccessCommand(Building* building, BuildingState* policy)
+    : building(building), held(policy), policyName(policy == nullptr ? "no policy" : policy->getName())
+{
+}
+
+RestrictAccessCommand::~RestrictAccessCommand()
+{
+    delete held;
+}
+
+bool RestrictAccessCommand::execute()
+{
+    if (building == nullptr || held == nullptr)
+    {
+        std::cout << "[RestrictAccessCommand] needs a building and an access policy" << std::endl;
+        return false;
+    }
+    BuildingState* previous = building->restrictAccess(held);
+    if (previous == nullptr)
+    {
+        return false;
+    }
+    held = previous;
+    return true;
+}
+
+bool RestrictAccessCommand::undo()
+{
+    if (building == nullptr || held == nullptr)
+    {
+        return false;
+    }
+    std::cout << "[RestrictAccessCommand] restoring " << held->getName() << " access to " << building->getName() << std::endl;
+    BuildingState* restriction = building->restrictAccess(held);
+    if (restriction == nullptr)
+    {
+        return false;
+    }
+    held = restriction;
+    return true;
+}
+
+std::string RestrictAccessCommand::describe() const
+{
+    if (building == nullptr)
+    {
+        return "Restrict access (no building)";
+    }
+    return "Restrict " + building->getName() + " to " + policyName;
 }
 
 SoundAlarmCommand::SoundAlarmCommand(Alarm* alarm)

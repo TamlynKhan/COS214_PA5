@@ -8,20 +8,26 @@ BuildingState::~BuildingState()
 {
 }
 
-void BuildingState::enter(Building&) const
+bool BuildingState::armsAlarms() const
 {
+    return false;
+}
+
+bool BuildingState::acceptsRestriction() const
+{
+    return true;
 }
 
 void BuildingState::admit(Building&, const Person&) const
 {
 }
 
-BuildingState* BuildingState::lockdown() const
+BuildingState* BuildingState::lockdown()
 {
-    return new LockedState();
+    return new LockedState(this);
 }
 
-BuildingState* BuildingState::reopen() const
+BuildingState* BuildingState::reopen()
 {
     return nullptr;
 }
@@ -36,9 +42,14 @@ bool UnlockedState::allows(const Person&) const
     return true;
 }
 
-void UnlockedState::enter(Building& building) const
+LockedState::LockedState(BuildingState* resumeTo)
+    : resumeTo(resumeTo)
 {
-    building.deactivateAlarms();
+}
+
+LockedState::~LockedState()
+{
+    delete resumeTo;
 }
 
 std::string LockedState::getName() const
@@ -51,9 +62,14 @@ bool LockedState::allows(const Person& person) const
     return person.getRole() == Role::SECURITY;
 }
 
-void LockedState::enter(Building& building) const
+bool LockedState::armsAlarms() const
 {
-    building.activateAlarms();
+    return true;
+}
+
+bool LockedState::acceptsRestriction() const
+{
+    return false;
 }
 
 void LockedState::admit(Building& building, const Person& person) const
@@ -62,14 +78,20 @@ void LockedState::admit(Building& building, const Person& person) const
     building.deactivateAlarms();
 }
 
-BuildingState* LockedState::lockdown() const
+BuildingState* LockedState::lockdown()
 {
     return nullptr;
 }
 
-BuildingState* LockedState::reopen() const
+BuildingState* LockedState::reopen()
 {
-    return new UnlockedState();
+    BuildingState* next = resumeTo;
+    resumeTo = nullptr;
+    if (next == nullptr)
+    {
+        next = new UnlockedState();
+    }
+    return next;
 }
 
 std::string CleaningOnlyState::getName() const

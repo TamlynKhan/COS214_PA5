@@ -75,11 +75,11 @@ std::vector<ResponseUnit*> DispatchCentre::dispatch(Incident* incident)
         return selected;
     }
 
+    incident->setStatus(IncidentStatus::DISPATCHED);
     for (ResponseUnit* unit : selected)
     {
         unit->deploy(incident);
     }
-    incident->setStatus(IncidentStatus::DISPATCHED);
     return selected;
 }
 
@@ -90,11 +90,24 @@ int DispatchCentre::recall(Incident* incident, const std::vector<ResponseUnit*>&
     {
         if (unit->getAssignment() == incident)
         {
-            unit->standDown();
+            unit->recall();
             ++recalled;
         }
     }
     return recalled;
+}
+
+int DispatchCentre::unitsAssignedTo(const Incident* incident) const
+{
+    int count = 0;
+    for (ResponseUnit* unit : roster)
+    {
+        if (incident != nullptr && unit->getAssignment() == incident)
+        {
+            ++count;
+        }
+    }
+    return count;
 }
 
 void DispatchCentre::printRoster() const

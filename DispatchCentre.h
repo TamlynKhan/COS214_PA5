@@ -21,6 +21,7 @@ class DispatchCentre
 
         std::vector<ResponseUnit*> dispatch(Incident* incident);
         int recall(Incident* incident, const std::vector<ResponseUnit*>& units);
+        int unitsAssignedTo(const Incident* incident) const;
         void printRoster() const;
 
     private:
