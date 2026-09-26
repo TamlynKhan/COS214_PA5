@@ -16,7 +16,7 @@ private:
     IncidentMediator* coordinator;
 public:
     CampusGuardFacade(OperatorConsole* console, DispatchCentre* centre, IncidentMediator* coordinator);
-    Incident* CampusGuardFacade::reportIncident(const std::string& id, const std::string& description, Building* building, UnitType requiredUnit);
+    Incident* reportIncident(const std::string& id, const std::string& description, Building* building, UnitType requiredUnit);
     bool respondToBreach(Incident* incident, Building* building, Alarm* alarm, DispatchStrategy* strategy = nullptr);
     bool closeIncident(Incident* incident);
 };
