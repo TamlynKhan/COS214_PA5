@@ -1,6 +1,8 @@
 #ifndef CAMPUSGUARDFACADE_H
 #define CAMPUSGUARDFACADE_H
 
+#include "UnitType.h"
+
 class OperatorConsole;
 class DispatchCentre;
 class DispatchStrategy;
