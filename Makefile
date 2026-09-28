@@ -7,6 +7,7 @@ SRCS = main.cpp \
        BlueSecurityAlarm.cpp \
        Building.cpp \
        BuildingState.cpp \
+       CampusGuardFacade.cpp \
        DispatchCentre.cpp \
        DispatchStrategy.cpp \
        Incident.cpp \
